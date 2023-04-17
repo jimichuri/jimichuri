@@ -1,0 +1,244 @@
+import './main.css'
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+/**
+ * Base
+ */
+
+// Canvas
+// const canvas = document.querySelector('canvas.webgl')
+const canvas = document.querySelector('canvas.webgl')
+// Scene
+const scene = new THREE.Scene()
+
+    //----<  axes 좌표표시  >--->
+    const axesHelper = new THREE.AxesHelper()
+    scene.add(axesHelper)
+
+
+/**
+ * Models
+ */
+
+//드라코 압축 사용하기
+const dracoLoader = new DRACOLoader()
+//노드모듈 examples >  js > libs에서 draco폴더를 static폴더에 복제한다.
+dracoLoader.setDecoderPath('/static/draco/')
+
+const gltfLoader = new GLTFLoader()
+gltfLoader.setDRACOLoader(dracoLoader)//드라코 압축를 gltfLoader에 적용
+
+let mixer = null
+
+
+gltfLoader.load(
+    // '/models/Fox/glTF/Fox.gltf',//애니메이션
+    //'../static/models/fin01.glb',
+    '../static/models/mm.glb',
+
+
+    //애니메이션 일때
+    // (gltf) => {
+
+    //     // 여우 애니메이션
+    //     mixer = new THREE.AnimationMixer(gltf.scene)
+    //     const action = mixer.clipAction(gltf.animations[1])
+
+    //     //console.log(action)
+    //     action.play()
+
+    //     //크기조절
+    //     gltf.scene.scale.set(0.025, 0.025, 0.025)
+    //     scene.add(gltf.scene)
+
+    // }
+
+
+    //정지화면 일때
+    (gltf) => {
+        gltf.scene.position.set(0, 0, 0)//기본값 건드리면 안됌 모양 변형됨
+        gltf.scene.scale.set(1, 1, 1) //크기조절
+        gltf.scene.rotation.y = Math.PI * -.18 //정면 .18 
+        scene.add(gltf.scene)
+        console.log(gltf.scene)
+        //updateAllMaterials() //모든 메쉬에 그림자 적용, 배경이미지함수 잇을경우 같이 적용됨
+    }
+)
+
+
+/**
+ * Lights
+ */
+const ambientLight = new THREE.AmbientLight(0xffffff, .8) //0.1
+ambientLight.position.set(0.2, 0.2, 0.2)
+scene.add(ambientLight)
+
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 5) // 빛색 ,  강도         
+//directionalLight.castShadow = true //그림자 활성화
+directionalLight.shadow.mapSize.set(1024, 1024)
+directionalLight.shadow.camera.top = 3
+directionalLight.shadow.camera.right = 6
+directionalLight.shadow.camera.left = -6 // -7
+directionalLight.shadow.camera.bottom = -3
+directionalLight.shadow.camera.far = 10 // 15
+directionalLight.shadow.normalBias = 0.05 //그림자 적용시 주름 제거
+directionalLight.position.set(-7, 10, 7)
+directionalLight.position.set(9, 12, 6)
+//scene.add(directionalLight) // 베이킹 uv 적용 gltf일 경우  비활성화 
+
+
+  //CameraHelper를 사용하여 섀도우 맵 카메라로 렌더링될 영역표시됨 axes와 같은 역할 - 위치변경 불가 >--->
+  const cameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
+  scene.add(cameraHelper)
+
+
+
+/**
+ * Sizes
+ */
+const sizes = {
+    width:  500,// window.innerWidth,
+    height: 300
+    // width: window.innerWidth,
+    // height: window.innerHeight
+}
+
+window.addEventListener('resize', () => {
+    // Update sizes
+    sizes.width = 500 //window.innerWidth
+    sizes.height = 300
+
+    // Update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix()
+
+    // Update renderer
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+})
+
+
+
+
+
+
+/**
+ * Camera
+ */
+// Base camera
+const fov = 15; //25에서 원금감이 작고 자연스러움   
+const aspect = sizes.width / sizes.height;  // the canvas default : 1,   sizes.width / sizes.height,
+const near = 0.1; //
+const far = 90; //화면잘림
+const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+
+
+//나는 보통 45에서 75 시야각를 사용합니다.
+camera.position.set(0, -1, 0) // x, y ,z
+camera.rotation.set(90, 90, 0)
+camera.position.z = 12
+// const camera = new THREE.OrthographicCamera(- 1,  1, 1,  - 1, 0.1, 100);
+
+
+// camera.lookAt(mesh.position)
+scene.add(camera)
+
+
+
+// Controls
+const controls = new OrbitControls(camera, canvas)
+controls.target.set(1, 1, 1)// gltf 요소 위치조정
+controls.enableDamping = true
+
+
+
+
+
+/**
+ * Environment map 환경맵 배경
+ */
+// const cubeTextureLoader = new THREE.CubeTextureLoader()
+// const environmentMap = cubeTextureLoader.load([
+//     '/textures/environmentMaps/0/px.jpg',
+//     '/textures/environmentMaps/0/nx.jpg',
+//     '/textures/environmentMaps/0/py.jpg',
+//     '/textures/environmentMaps/0/ny.jpg',
+//     '/textures/environmentMaps/0/pz.jpg',
+//     '/textures/environmentMaps/0/nz.jpg'
+// ])
+// scene.background = environmentMap //환경맵 배경적용 
+
+//그림자적용 함수
+const updateAllMaterials = () => {
+    scene.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+            // ...
+
+            child.castShadow = true//그림자 적용
+            child.receiveShadow = true//그림자 적용
+            child.material.envMap = environmentMap //환경 맵 배경 적용
+
+        }
+    })
+}
+
+
+
+
+/**
+ * Renderer
+ */
+const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    antialias: true,
+    alpha: true
+})
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.setSize(sizes.width, sizes.height)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setClearColor(0X7493CA, 0) //배경색 , alpha적용
+
+
+//빛관련
+renderer.physicallyCorrectLights = true // 사실적인 빛 활성화
+renderer.outputEncoding = THREE.sRGBEncoding //기본값 THREE.LinearEncoding, 또다른 값 THREE.GammaEncoding
+// environmentMap.encoding = THREE.sRGBEncoding //환경맵 적용했다면 환경맵에도 적용
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+
+
+
+
+
+
+/**
+ * Animate
+ */
+const clock = new THREE.Clock()
+let previousTime = 0
+
+const ani = () => {
+    const elapsedTime = clock.getElapsedTime()
+    const deltaTime = elapsedTime - previousTime
+    previousTime = elapsedTime
+
+    // Update mixer
+    if (mixer !== null) {
+        mixer.update(deltaTime)
+    }
+
+
+    // Update controls
+    controls.update()
+
+    // Render
+    renderer.render(scene, camera)
+
+    // Call ani again on the next frame
+    window.requestAnimationFrame(ani)
+}
+
+ani()
