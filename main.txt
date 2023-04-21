@@ -186,8 +186,8 @@
 
             //정지화면 일때
             (gltf) => {
-                // glbs = gltf.scene;
-                // scene.add(glbs);
+                glbs = gltf.scene;
+                scene.add(glbs);
                 // console.log( gltf.scene.children)
                 // updateAllMaterials()
 
@@ -215,9 +215,10 @@
 
 
                     scene.add(mm);
-                    console.log(mm);
+                    
                 }
                 requestAnimationFrame(animate);
+                console.log(mm);
             })
 
 
@@ -241,13 +242,7 @@
             // glbb.rotation.x = cube.rotation.ㅌ += 0.01
             // glbs.rotation.y = glbb.rotation.y += .1
 
-            // const timer = Date.now() * 0.0003;
-            var theta += 0.1;
-
-camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
-camera.position.y = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
-camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );
-
+            const timer = Date.now() * 0.0003;
 
 			// camera.position.x = Math.sin( timer ) * 0.5;
 			// camera.position.z = Math.cos( timer ) * 0.5;
@@ -261,8 +256,7 @@ camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );
         }
 
         function rtate() {
-            // glbs.rotation.y = glbs.rotation.y += 180
-            console.log("111")
+            glbs.rotation.y = glbs.rotation.y += 180
         }
 
 
@@ -271,3 +265,7 @@ camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );
 </body>
 
 </html>
+
+
+
+https://github.com/mrdoob/three.js/issues/22598
